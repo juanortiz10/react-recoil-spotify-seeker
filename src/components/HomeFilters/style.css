@@ -1,0 +1,8 @@
+.home-filters {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin: 2rem auto;
+  width: 60%;
+  min-width: 500px;
+}

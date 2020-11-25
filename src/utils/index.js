@@ -10,7 +10,6 @@ export const spotifyAuthCall = async (requiredParams) => {
   try {
     const params = {
       ...requiredParams,
-      grant_type: "authorization_code",
       ...commonParams,
     };
   
@@ -21,6 +20,29 @@ export const spotifyAuthCall = async (requiredParams) => {
       url: "https://accounts.spotify.com/api/token",
       body: searchParams,
       headers: { "Content-type": "application/x-www-form-urlencoded" },
+    });
+    
+    return await spotifyCall.json();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const spotifySearchCall = async (paramsArray, token) => {
+  try {
+    const url = new URL("https://api.spotify.com/v1/search");
+
+    for (const item of paramsArray) {
+      const key = Object.keys(item)[0];
+      url.searchParams.append(key, item[key]);
+    }
+  
+    const spotifyCall = await apiCall({
+      method: "GET",
+      url,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
     
     return await spotifyCall.json();

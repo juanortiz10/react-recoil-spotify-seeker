@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from "react";
 import { useRecoilState } from "recoil";
-import { useLocation } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 
 import { isAuthenticated as isAuthenticatedAtom, spotifyRefreshToken as spotifyRefreshTokenAtom, spotifyTokenResponse as spotifyTokenResponseAtom } from "../../recoil/auth/atoms";
 import { spotifyAuthCall } from "../../utils";
@@ -11,7 +11,8 @@ const spotifyUrl = `https://accounts.spotify.com/authorize?client_id=${process.e
 
 export default function Login() {
   const location = useLocation();
-  const [, setIsAuthenticated] = useRecoilState(isAuthenticatedAtom);
+  const history = useHistory();
+  const [isAuthenticated, setIsAuthenticated] = useRecoilState(isAuthenticatedAtom);
   const [spotifyRefreshToken, setSpotifyRefreshToken] = useRecoilState(spotifyRefreshTokenAtom);
   const [spotifyTokenResponse, setSpotifyTokenResponse] = useRecoilState(spotifyTokenResponseAtom);
 
@@ -20,18 +21,24 @@ export default function Login() {
       let response;
     
       if (spotifyRefreshToken)
-        response = await spotifyAuthCall({ refresh_token: spotifyRefreshToken });
+        response = await spotifyAuthCall({ refresh_token: spotifyRefreshToken, grant_type: "refresh_token" });
       else
-        response = await spotifyAuthCall({ code });
+        response = await spotifyAuthCall({ code, grant_type: "authorization_code" });
       
-      console.log(response);
-      setSpotifyRefreshToken(response?.refresh_token);
-      setSpotifyTokenResponse(response);
-      setIsAuthenticated(true);
-  
-      // TODO redirigir a pantalla de buscador
+      if (response.access_token) {
+        setSpotifyRefreshToken(response?.refresh_token);
+        setSpotifyTokenResponse(response);
+        setIsAuthenticated(true);
+    
+        history.replace("/home");
+      } else {
+        throw new Error("Usuario no fue logeado");
+      }
     } catch (error) {
-      console.log(error);
+      alert("Usuario no fue logeado");
+      setSpotifyTokenResponse(null);
+      setSpotifyRefreshToken(null);
+      setIsAuthenticated(false);
     }
   }, [setSpotifyRefreshToken, setSpotifyTokenResponse, setIsAuthenticated, spotifyRefreshToken]);
 
@@ -39,7 +46,7 @@ export default function Login() {
     const urlParams = new URLSearchParams(location.search);
     const spotifyCode = urlParams.get("code");
     
-    if (spotifyCode) authenticateUser(spotifyCode);
+    if (spotifyCode || isAuthenticated) authenticateUser(spotifyCode);
   }, [location.search]);
 
   const handleLoginClick = () => {

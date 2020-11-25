@@ -1,4 +1,4 @@
-# React Recoil Spotify Searcher
+# React Recoil Spotify Seeker
 
 This example is the final project done on my YouTube course. I use the new state management library created by facebook's engineers: [Recoil](https://recoiljs.org/).
 
